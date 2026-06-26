@@ -1,0 +1,1 @@
+["store_nbr", "family", "onpromotion", "city", "state", "type", "cluster", "oil_price", "is_holiday", "year", "month", "day_of_week", "week_of_year", "quarter", "is_weekend", "lag_7", "lag_14", "lag_28", "rolling_avg_7", "rolling_avg_28", "trend_7"]
