@@ -17,4 +17,4 @@ email-validator
 
 httpx
 requests
-google-auth
+google-auth>=2.0.0
