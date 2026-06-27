@@ -6,10 +6,10 @@ lightgbm
 shap
 scikit-learn
 python-multipart
+fastapi-mail
 
 supabase
 python-dotenv
-
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt
