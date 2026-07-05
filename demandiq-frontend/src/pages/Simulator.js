@@ -44,10 +44,10 @@ export default function Simulator() {
       const customPayload = { ...currentForm };
 
       const [rBase, rPromo, rHol, rCustom] = await Promise.all([
-        axios.post(`${apiUrl}/predict`, basePayload),
-        axios.post(`${apiUrl}/predict`, promoPayload),
-        axios.post(`${apiUrl}/predict`, holPayload),
-        axios.post(`${apiUrl}/predict`, customPayload)
+        axios.post(`${API_URL}/predict`, basePayload),
+        axios.post(`${API_URL}/predict`, promoPayload),
+        axios.post(`${API_URL}/predict`, holPayload),
+        axios.post(`${API_URL}/predict`, customPayload)
       ]);
 
       setScenarios({

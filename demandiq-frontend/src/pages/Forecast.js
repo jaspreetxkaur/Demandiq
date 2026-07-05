@@ -47,7 +47,7 @@ export default function Forecast() {
     formData.append('file', selectedFile);
 
     try {
-      const res = await axios.post(`${apiUrl}/api/forecast/upload`, formData, {
+      const res = await axios.post(`${API_URL}/api/forecast/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data.error) {
