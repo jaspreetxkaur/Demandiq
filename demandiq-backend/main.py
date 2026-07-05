@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import shap
 from auth_routes import router as auth_router
+from smtp_test import router as smtp_test_router
 
 app = FastAPI(title="DemandIQ API")
 
@@ -17,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth_router)
+app.include_router(smtp_test_router)
 
 # ── Load models ──────────────────────────────────────────
 with open("models/lgbm_model.pkl", "rb") as f:
