@@ -77,7 +77,7 @@ export default function Login() {
     const initGoogle = () => {
       if (window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || '897217433826-7ra5i7sd52cvu25aogd3qp3arlqt5t3p.apps.googleusercontent.com',
+          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
           callback: handleGoogleResponse,
         });
         window.google.accounts.id.renderButton(

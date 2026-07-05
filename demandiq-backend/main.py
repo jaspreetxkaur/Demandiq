@@ -1,4 +1,4 @@
-import pickle, json
+import pickle, json, asyncio
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile
@@ -491,8 +491,12 @@ async def upload_csv(file: UploadFile = File(...)):
         if not contents:
             return {"error": "Uploaded file is empty."}
 
-        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
-        results = run_forecast_pipeline(df)
+        # Run pandas parsing and execution pipeline in a background thread to prevent blocking the event loop
+        def process_data():
+            df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+            return run_forecast_pipeline(df)
+
+        results = await asyncio.to_thread(process_data)
         return results
     except Exception as e:
         return {"error": f"Error processing CSV file: {str(e)}"}

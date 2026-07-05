@@ -1,7 +1,7 @@
 import os
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from dotenv import load_dotenv
 from jose import JWTError, jwt
@@ -18,6 +18,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 1440))
+
+if not SUPABASE_URL or not SUPABASE_KEY or not JWT_SECRET:
+    raise ValueError("Missing critical configuration in environment variables: SUPABASE_URL, SUPABASE_KEY, or JWT_SECRET")
 
 # ── Clients ──────────────────────────────────────────────
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -37,12 +40,12 @@ def generate_otp() -> str:
 
 # ── JWT utils ────────────────────────────────────────────
 def create_jwt_token(user_id: str, email: str) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=JWT_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "email": email,
         "exp": expire,
-        "iat": datetime.utcnow()
+        "iat": datetime.now(timezone.utc)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -96,7 +99,7 @@ def save_otp(email: str, otp: str, purpose: str) -> bool:
         # Delete old OTPs for this email and purpose
         supabase.table("otp_codes").delete().eq("email", email).eq("purpose", purpose).execute()
         # Save new OTP — expires in 10 minutes
-        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
         supabase.table("otp_codes").insert({
             "email": email,
             "otp": otp,
@@ -115,8 +118,10 @@ def verify_otp_code(email: str, otp: str, purpose: str) -> bool:
             return False
         record = res.data[0]
         # Check expiry
-        expires_at = datetime.fromisoformat(record["expires_at"].replace("Z", ""))
-        if datetime.utcnow() > expires_at:
+        expires_at = datetime.fromisoformat(record["expires_at"].replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expires_at:
             return False
         # Mark as used
         supabase.table("otp_codes").update({"used": True}).eq("id", record["id"]).execute()
