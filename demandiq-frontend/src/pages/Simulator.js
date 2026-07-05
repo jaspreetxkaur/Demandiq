@@ -61,7 +61,7 @@ export default function Simulator() {
     } finally {
       setLoading(false);
     }
-  }, [apiUrl]);
+  }, [API_URL]);
 
   // Debounced run simulation or run on input change
   useEffect(() => {

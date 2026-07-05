@@ -23,7 +23,7 @@ export default function Layout({ children, activeNav }) {
     let active = true;
     const checkHealth = async () => {
       try {
-        await axios.get(`${apiUrl}/health`, { timeout: 3000 });
+        await axios.get(`${API_URL}/health`, { timeout: 3000 });
         if (active) setApiStatus('connected');
       } catch (err) {
         if (active) setApiStatus('offline');
@@ -35,7 +35,7 @@ export default function Layout({ children, activeNav }) {
       active = false;
       clearInterval(interval);
     };
-  }, [apiUrl]);
+  }, [API_URL]);
 
   const apiTone = {
     loading: { label: 'Checking API', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.18)' },
