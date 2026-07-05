@@ -2,7 +2,7 @@ import urllib.request
 import json
 import os
 from recaptcha import verify_recaptcha
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from auth import (
     get_user_by_email, create_user, save_otp,
@@ -56,7 +56,7 @@ class ResendOtpRequest(BaseModel):
 # ── Routes ───────────────────────────────────────────────
 
 @router.post("/register")
-async def register(req: RegisterRequest):
+async def register(req: RegisterRequest, background_tasks: BackgroundTasks):
     # Check if user already exists
     existing = get_user_by_email(req.email)
     if existing:
@@ -66,7 +66,7 @@ async def register(req: RegisterRequest):
             # User exists but not verified — resend OTP
             otp = generate_otp()
             save_otp(req.email, otp, "signup")
-            await send_otp_email(req.email, otp, "signup")
+            background_tasks.add_task(send_otp_email, req.email, otp, "signup")
             return {"message": "OTP resent. Please verify your email.", "email": req.email}
 
     # Create user
@@ -83,7 +83,7 @@ async def register(req: RegisterRequest):
     # Send OTP
     otp = generate_otp()
     save_otp(req.email, otp, "signup")
-    await send_otp_email(req.email, otp, "signup")
+    background_tasks.add_task(send_otp_email, req.email, otp, "signup")
 
     return {"message": "OTP sent to your email.", "email": req.email}
 
@@ -114,7 +114,7 @@ async def verify_otp(req: VerifyOtpRequest):
 
 
 @router.post("/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, background_tasks: BackgroundTasks):
     if not verify_recaptcha(req.recaptcha_token):
         raise HTTPException(status_code=400, detail="reCAPTCHA verification failed. Please try again.")
 
@@ -129,13 +129,13 @@ async def login(req: LoginRequest):
         # Resend OTP
         otp = generate_otp()
         save_otp(req.email, otp, "login")
-        await send_otp_email(req.email, otp, "login")
+        background_tasks.add_task(send_otp_email, req.email, otp, "login")
         raise HTTPException(status_code=403, detail="Email not verified. OTP resent.")
 
     # Send login OTP
     otp = generate_otp()
     save_otp(req.email, otp, "login")
-    await send_otp_email(req.email, otp, "login")
+    background_tasks.add_task(send_otp_email, req.email, otp, "login")
 
     return {"message": "OTP sent to your email.", "email": req.email}
 
@@ -225,7 +225,7 @@ async def google_login(req: GoogleLoginRequest):
 
 
 @router.post("/forgot-password")
-async def forgot_password(req: ForgotPasswordRequest):
+async def forgot_password(req: ForgotPasswordRequest, background_tasks: BackgroundTasks):
     user = get_user_by_email(req.email)
     if not user:
         # Security — don't reveal if email exists
@@ -233,7 +233,7 @@ async def forgot_password(req: ForgotPasswordRequest):
 
     otp = generate_otp()
     save_otp(req.email, otp, "reset")
-    await send_otp_email(req.email, otp, "reset")
+    background_tasks.add_task(send_otp_email, req.email, otp, "reset")
 
     return {"message": "If this email exists, an OTP has been sent.", "email": req.email}
 
@@ -274,14 +274,14 @@ async def change_password(req: ChangePasswordRequest):
 
 
 @router.post("/resend-otp")
-async def resend_otp(req: ResendOtpRequest):
+async def resend_otp(req: ResendOtpRequest, background_tasks: BackgroundTasks):
     user = get_user_by_email(req.email)
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
     otp = generate_otp()
     save_otp(req.email, otp, req.purpose)
-    await send_otp_email(req.email, otp, req.purpose)
+    background_tasks.add_task(send_otp_email, req.email, otp, req.purpose)
 
     return {"message": "OTP resent successfully."}
 

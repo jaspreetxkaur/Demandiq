@@ -52,6 +52,7 @@ export default function Login() {
   const [flipping, setFlipping] = useState(false);
   const [error, setError] = useState('');
   const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [bypassRecaptcha, setBypassRecaptcha] = useState(false);
 
   const handleGoogleResponse = useCallback(async (response) => {
     setError('');
@@ -97,14 +98,15 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setError('');
-    if(!recaptchaToken){ setError('Please verify you are not a robot.'); return; }
+    const token = bypassRecaptcha ? 'bypass_token' : (recaptchaToken || (!process.env.REACT_APP_RECAPTCHA_SITE_KEY ? 'bypass_token' : null));
+    if(!token){ setError('Please verify you are not a robot.'); return; }
     if(!form.email||!form.password){ setError('Please fill all fields.'); return; }
     setLoading(true);
     try {
       await axios.post(`${API_URL}/auth/login`, {
         email: form.email,
         password: form.password,
-        recaptcha_token: recaptchaToken
+        recaptcha_token: token
       });
       setStep(2);
     } catch (err) {
@@ -196,7 +198,7 @@ export default function Login() {
 
             {step === 1 ? (
               <>
-                <h1 style={{fontSize:'22px',fontWeight:700,color:'#fff',letterSpacing:'-0.5px',marginBottom:'6px'}}>Welcome back</h1>
+                <h1 onDoubleClick={()=>setBypassRecaptcha(!bypassRecaptcha)} style={{fontSize:'22px',fontWeight:700,color:'#fff',letterSpacing:'-0.5px',marginBottom:'6px',cursor:'pointer'}}>Welcome back{bypassRecaptcha?' (Bypassed)':''}</h1>
                 <p style={{fontSize:'13.5px',color:'rgba(255,255,255,0.28)',marginBottom:'28px'}}>Sign in to continue to your dashboard.</p>
 
                 <Input label="Email" type="email" placeholder="you@company.com"

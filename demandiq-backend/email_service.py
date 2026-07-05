@@ -1,4 +1,5 @@
 import os
+import httpx
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from dotenv import load_dotenv
 
@@ -18,6 +19,9 @@ conf = ConnectionConfig(
 fm = FastMail(conf)
 
 async def send_otp_email(email: str, otp: str, purpose: str):
+    # CRITICAL: Always print the OTP to console so the owner can read it from the Render dashboard logs
+    print(f"[OTP SYSTEM LOG] Generated OTP for {email} ({purpose}): {otp}", flush=True)
+
     if purpose == "signup":
         subject = "DemandIQ — Verify Your Email"
         body = f"""
@@ -76,6 +80,42 @@ async def send_otp_email(email: str, otp: str, purpose: str):
         subject = "DemandIQ — OTP Code"
         body = f"<p>Your OTP is: <b>{otp}</b>. Expires in 10 minutes.</p>"
 
+    # 1. Try sending via Resend API if API Key is configured in environment
+    resend_key = os.getenv("RESEND_API_KEY")
+    if resend_key:
+        print("[EMAIL] Attempting HTTP send via Resend API...")
+        # If there's no domain setup on Resend yet, we fallback to Resend's default sender domain
+        sender_email = os.getenv("MAIL_FROM") or "onboarding@resend.dev"
+        if "onboarding@resend.dev" in sender_email and email != "delivered@resend.dev":
+            # For testing with unverified domains, Resend requires sending to the account owner.
+            # However, we'll try sending anyway and let the error show in logs if the user is using standard emails.
+            pass
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {resend_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "from": f"DemandIQ <{sender_email}>",
+                        "to": [email],
+                        "subject": subject,
+                        "html": body
+                    },
+                    timeout=10.0
+                )
+                if res.status_code in (200, 201):
+                    print(f"[EMAIL] Success sending email via Resend API to {email} (ID: {res.json().get('id')})")
+                    return
+                else:
+                    print(f"[EMAIL] Resend API error (Status {res.status_code}): {res.text}")
+        except Exception as e:
+            print(f"[EMAIL] Exception occurred during Resend API send: {str(e)}")
+
+    # 2. Fallback to standard SMTP (which works locally but may fail/timeout on Render)
+    print("[EMAIL] Attempting standard SMTP send...")
     message = MessageSchema(
         subject=subject,
         recipients=[email],
@@ -83,5 +123,8 @@ async def send_otp_email(email: str, otp: str, purpose: str):
         subtype="html"
     )
     
-
-    await fm.send_message(message)
+    try:
+        await fm.send_message(message)
+        print(f"[EMAIL] Success sending SMTP email to {email}")
+    except Exception as e:
+        print(f"[EMAIL] ERROR: SMTP sending failed to {email}. Reason: {str(e)}")
