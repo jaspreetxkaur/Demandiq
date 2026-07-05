@@ -10,7 +10,7 @@ export default function Forecast() {
   const [result, setResult] = useState(null);
   const [csvData, setCsvData] = useState(null);
 
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;
+  const API_URL = process.env.REACT_APP_API_BASE_URL;
   const parseCSV = (text) => {
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     if (lines.length === 0) return null;
