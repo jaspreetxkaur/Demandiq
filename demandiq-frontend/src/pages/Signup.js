@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Logo from '../components/Logo';
-
-const API_URL = 'http://127.0.0.1:8000';
+const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
 function Input({ label, type, placeholder, value, onChange }) {
   const [focused, setFocused] = useState(false);

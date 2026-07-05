@@ -31,7 +31,7 @@ export default function Simulator() {
     custom: 0
   });
 
-  const apiUrl = localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+  const apiUrl = localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL ;
 
   const runSimulation = useCallback(async (currentForm) => {
     setLoading(true);

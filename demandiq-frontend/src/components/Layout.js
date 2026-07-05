@@ -17,7 +17,7 @@ export default function Layout({ children, activeNav }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [apiStatus, setApiStatus] = useState('loading');
 
-  const apiUrl = localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+  const apiUrl = localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL ;
 
   useEffect(() => {
     let active = true;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-const API_URL = 'http://127.0.0.1:8000';
+const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
 export default function Settings() {
   const [profile, setProfile] = useState({
@@ -53,7 +53,10 @@ const handleChangePassword = async () => {
   });
 
   useEffect(() => {
-    const savedUrl = localStorage.getItem('demandiq_api_url') || 'http://127.0.0.1:8000';
+    const savedUrl =
+      localStorage.getItem('demandiq_api_url') ||
+      process.env.REACT_APP_API_BASE_URL;
+  
     setApiUrl(savedUrl);
   }, []);
 

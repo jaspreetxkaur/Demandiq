@@ -176,7 +176,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const getApiUrl = () => localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+  const getApiUrl = () => localStorage.getItem('demandiq_api_url') || process.env.REACT_APP_API_BASE_URL ;
 
   const predict = async () => {
     const payload = normalizeForecastPayload(form);

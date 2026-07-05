@@ -5,7 +5,7 @@ import axios from 'axios';
 import Logo from '../components/Logo';
 
 const API_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
+  process.env.REACT_APP_API_BASE_URL ;
 
 function Input({ label, type, placeholder, value, onChange }) {
   const [focused, setFocused] = useState(false);
