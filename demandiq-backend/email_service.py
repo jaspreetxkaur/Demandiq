@@ -80,7 +80,35 @@ async def send_otp_email(email: str, otp: str, purpose: str):
         subject = "DemandIQ — OTP Code"
         body = f"<p>Your OTP is: <b>{otp}</b>. Expires in 10 minutes.</p>"
 
-    # 1. Try sending via Resend API if API Key is configured in environment
+    # 1. Try sending via Google Apps Script Web App (Bypasses Render's SMTP port blocks completely, no domain/credit card required)
+    script_url = os.getenv("GOOGLE_SCRIPT_URL")
+    if script_url:
+        print("[EMAIL] Attempting HTTP send via Google Apps Script...")
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    script_url,
+                    json={
+                        "email": email,
+                        "subject": subject,
+                        "body": body
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=12.0
+                )
+                if res.status_code == 200:
+                    response_json = res.json()
+                    if response_json.get("status") == "success":
+                        print(f"[EMAIL] Success sending email via Google Apps Script to {email}")
+                        return
+                    else:
+                        print(f"[EMAIL] Google Apps Script returned error: {response_json.get('message')}")
+                else:
+                    print(f"[EMAIL] Google Apps Script HTTP error (Status {res.status_code}): {res.text}")
+        except Exception as e:
+            print(f"[EMAIL] Exception occurred during Google Apps Script send: {str(e)}")
+
+    # 2. Try sending via Resend API if API Key is configured in environment
     resend_key = os.getenv("RESEND_API_KEY")
     if resend_key:
         print("[EMAIL] Attempting HTTP send via Resend API...")
@@ -114,7 +142,7 @@ async def send_otp_email(email: str, otp: str, purpose: str):
         except Exception as e:
             print(f"[EMAIL] Exception occurred during Resend API send: {str(e)}")
 
-    # 2. Fallback to standard SMTP (which works locally but may fail/timeout on Render)
+    # 3. Fallback to standard SMTP (which works locally but may fail/timeout on Render)
     print("[EMAIL] Attempting standard SMTP send...")
     message = MessageSchema(
         subject=subject,
