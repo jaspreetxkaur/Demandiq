@@ -14,6 +14,11 @@ from email_service import send_otp_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+@router.get("/debug-env")
+async def debug_env():
+    return {"env_keys": list(os.environ.keys())}
+
+
 # ── Schemas ──────────────────────────────────────────────
 class RegisterRequest(BaseModel):
     name: str
